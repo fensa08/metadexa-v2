@@ -1,0 +1,431 @@
+openapi: 3.0.1
+info:
+  title: MetaDexa API
+  description: Swap quotes, gasless swaps and referrals.
+  version: "1.0"
+servers:
+  - url: https://api.metadexa.io
+tags:
+  - name: Quotes
+  - name: Referrals
+paths:
+  /v1.0/{chainId}/getQuote:
+    get:
+      tags: [Quotes]
+      summary: Get a quote
+      description: Returns the best route for a pair, with a transaction ready to send.
+      operationId: getQuote
+      parameters:
+        - $ref: "#/components/parameters/ChainId"
+        - name: sellTokenAddress
+          in: query
+          required: true
+          description: Token to sell. Use `0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee` for the native token.
+          schema: { type: string }
+          example: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+        - name: buyTokenAddress
+          in: query
+          required: true
+          description: Token to buy.
+          schema: { type: string }
+          example: "0x14af1f2f02dccb1e43402339099a05a5e363b83c"
+        - name: sellTokenAmount
+          in: query
+          description: Amount to sell, in the token's smallest unit. Send this or `buyTokenAmount`.
+          schema: { type: string }
+          example: "10000000"
+        - name: buyTokenAmount
+          in: query
+          description: Amount to buy, in the token's smallest unit. Not supported on Optimism.
+          schema: { type: string }
+        - name: slippage
+          in: query
+          required: true
+          description: Accepted slippage as a fraction from 0 to 1. `0.01` is 1%.
+          schema: { type: string }
+          example: "0.005"
+        - name: fromAddress
+          in: query
+          required: true
+          description: Wallet that will send the swap.
+          schema: { type: string }
+          example: "0xe26F8f8A14251425Dd4E7f59f14eE5C0c2568956"
+        - name: recipient
+          in: query
+          description: Wallet that receives the buy tokens.
+          schema: { type: string }
+        - name: skipValidation
+          in: query
+          description: "`true` returns a price only, without `tx`."
+          schema: { type: boolean, default: false }
+      responses:
+        "200":
+          description: The best quote.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Quote" }
+        "400":
+          description: A parameter is missing or invalid. The body is plain text.
+          content:
+            text/html:
+              schema: { type: string }
+              example: 'Validation failed: "slippage" is required'
+        "500":
+          description: No route was found, or the swap simulation failed. The body is plain text.
+          content:
+            text/html:
+              schema: { type: string }
+              example: Aggregate Request failed
+        "504":
+          description: The request took longer than 25 seconds.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+  /v1.0/{chainId}/getGaslessQuote:
+    get:
+      tags: [Quotes]
+      summary: Get a gasless quote
+      description: Same as a quote, but a relayer pays the network gas. The fee is taken from the buy token.
+      operationId: getGaslessQuote
+      parameters:
+        - $ref: "#/components/parameters/ChainId"
+        - name: sellTokenAddress
+          in: query
+          required: true
+          description: Token to sell.
+          schema: { type: string }
+          example: "0x14Af1F2f02DCcB1e43402339099A05a5E363b83c"
+        - name: buyTokenAddress
+          in: query
+          required: true
+          description: Token to buy.
+          schema: { type: string }
+          example: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+        - name: sellTokenAmount
+          in: query
+          description: Amount to sell, in the token's smallest unit.
+          schema: { type: string }
+          example: "2000"
+        - name: slippage
+          in: query
+          required: true
+          description: Accepted slippage as a fraction from 0 to 1.
+          schema: { type: string }
+          example: "0.005"
+        - name: fromAddress
+          in: query
+          required: true
+          description: Wallet that signs and owns the swap.
+          schema: { type: string }
+          example: "0x252ca143428929B2A351888ab14634629a9CF216"
+        - name: skipValidation
+          in: query
+          description: "`true` returns a price only, without `tx`."
+          schema: { type: boolean, default: false }
+      responses:
+        "200":
+          description: The best gasless quote.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GaslessQuote" }
+        "400":
+          description: Invalid parameters, an amount too small to cover the fee, or a fee token that isn't accepted.
+        "500":
+          description: Gas price lookup or signing failed.
+  /v1.0/registerReferrer:
+    post:
+      tags: [Referrals]
+      summary: Register a referrer
+      description: Creates a 6-character referral code for a wallet. A wallet can register once.
+      operationId: registerReferrer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from]
+              properties:
+                from:
+                  type: string
+                  description: Wallet to register.
+                  example: "0x4444444444444444444444444444444444444444"
+      responses:
+        "201":
+          description: Registered.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: Referrer registered successfully }
+                  referrer: { type: string, example: "0x4444444444444444444444444444444444444444" }
+                  referralCode: { type: string, example: A1B2C3 }
+        "400":
+          description: The address is missing, invalid or already registered.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorBody" }
+  /v1.0/checkReferrer:
+    post:
+      tags: [Referrals]
+      summary: Check a referrer
+      description: Tells you whether a wallet is a registered referrer.
+      operationId: checkReferrer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [address]
+              properties:
+                address:
+                  type: string
+                  example: "0x4444444444444444444444444444444444444444"
+      responses:
+        "200":
+          description: The result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isReferrer: { type: boolean, example: true }
+        "400":
+          description: The address is missing or invalid.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorBody" }
+  /v1.0/addTransaction:
+    post:
+      tags: [Referrals]
+      summary: Record a referred swap
+      description: Saves a swap against a referral code as `PENDING`. Optimism (chain `10`) only.
+      operationId: addTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from, referralCode, transactionHash, chainId, amount, tokenFrom, adapterData]
+              properties:
+                from:
+                  type: string
+                  description: Wallet that sent the swap.
+                  example: "0x5555555555555555555555555555555555555555"
+                referralCode:
+                  type: string
+                  example: A1B2C3
+                transactionHash:
+                  type: string
+                  example: "0xabc"
+                chainId:
+                  type: string
+                  description: Must be the string `"10"`.
+                  example: "10"
+                amount:
+                  type: object
+                  description: Sell amount as a hex value.
+                  required: [hex]
+                  properties:
+                    hex: { type: string, example: "0x0de0b6b3a7640000" }
+                tokenFrom:
+                  type: string
+                  description: Token that was sold.
+                  example: "0x1111111111111111111111111111111111111111"
+                adapterData:
+                  type: string
+                  example: "0x"
+      responses:
+        "200":
+          description: Saved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: Transaction added successfully }
+        "400":
+          description: A field is missing, or the chain isn't supported.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+        "500":
+          description: The code is unknown, or the hash was already recorded.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorBody" }
+  /v1.0/verifyTransaction:
+    post:
+      tags: [Referrals]
+      summary: Confirm a referred swap
+      description: Checks the swap on-chain. If it matches, the swap becomes `CONFIRMED` and the referrer is credited. Optimism (chain `10`) only.
+      operationId: verifyTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [chainId, transactionHash, from]
+              properties:
+                chainId:
+                  type: string
+                  description: Must be the string `"10"`.
+                  example: "10"
+                transactionHash:
+                  type: string
+                  example: "0xabc"
+                from:
+                  type: string
+                  description: Must be the wallet that sent the swap.
+                  example: "0x5555555555555555555555555555555555555555"
+      responses:
+        "200":
+          description: Confirmed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: boolean, example: true }
+                  message: { type: string, example: Transaction verified successfully }
+        "400":
+          description: A field is missing, or the chain isn't supported.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+        "500":
+          description: The swap doesn't match, wasn't found, or was already confirmed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorBody" }
+  /v1.0/referrer:
+    post:
+      tags: [Referrals]
+      summary: Get referrer stats
+      description: Returns a referrer's totals and a page of referred swaps.
+      operationId: getReferrerStats
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from]
+              properties:
+                from:
+                  type: string
+                  description: The referrer's wallet. It isn't signed.
+                  example: "0x4444444444444444444444444444444444444444"
+                page:
+                  type: integer
+                  default: 1
+                rows:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  default: 5
+      responses:
+        "200":
+          description: Stats and pagination.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats:
+                    type: object
+                    properties:
+                      eoaAddress: { type: string }
+                      referralCode: { type: string, nullable: true }
+                      cumulativeVolume: { type: number, description: USD volume of confirmed swaps. }
+                      referredUsers: { type: integer }
+                      earnedRewards: { type: number, description: Reward points. }
+                      referredTransactions:
+                        type: array
+                        items: { type: object }
+                  pagination: { type: object }
+        "400":
+          description: Invalid page or rows, or the wallet isn't a referrer.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorBody" }
+components:
+  parameters:
+    ChainId:
+      name: chainId
+      in: path
+      required: true
+      description: "Chain ID: 1 Ethereum, 10 Optimism, 137 Polygon, 42161 Arbitrum One, 8453 Base."
+      schema:
+        type: integer
+        enum: [1, 10, 137, 42161, 8453]
+      example: 137
+  schemas:
+    Message:
+      type: object
+      properties:
+        message: { type: string }
+    ErrorBody:
+      type: object
+      properties:
+        error: { type: string }
+    Transaction:
+      type: object
+      description: Present unless `skipValidation` is `true`.
+      properties:
+        from: { type: string }
+        to: { type: string }
+        data: { type: string }
+        gas: { type: integer }
+        value: { type: string }
+        gasPrice: { type: string }
+    Quote:
+      type: object
+      properties:
+        estimatedGas: { type: integer, example: 531962 }
+        buyTokenAddress: { type: string, example: "0x14af1f2f02dccb1e43402339099a05a5e363b83c" }
+        buyAmount: { type: string, example: "153047124858823786407" }
+        sellTokenAddress: { type: string, example: "0xc2132d05d31c914a87c6611c10748aeb04b58e8f" }
+        sellAmount: { type: string, example: "10000000" }
+        allowanceTarget:
+          type: string
+          description: Contract to approve for the sell token. The zero address for the native token.
+          example: "0x6afD834f6e3D5ad5A83E7838ca45F3DBDe3E323d"
+        tx: { $ref: "#/components/schemas/Transaction" }
+    GaslessQuote:
+      type: object
+      properties:
+        estimatedGas: { type: integer, example: 240000 }
+        paymentTokenAddress:
+          type: string
+          description: Token the fee is paid in. This is the buy token.
+          example: "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270"
+        paymentFees:
+          type: string
+          description: Fee in the payment token's smallest unit. `0` when swaps are free.
+          example: "0"
+        buyTokenAddress: { type: string }
+        buyAmount: { type: string, example: "63179691357410456145" }
+        sellTokenAddress: { type: string }
+        sellAmount: { type: string, example: "1000000000000000000000" }
+        allowanceTarget: { type: string }
+        tx: { $ref: "#/components/schemas/Transaction" }
