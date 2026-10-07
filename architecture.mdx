@@ -8,8 +8,7 @@ description: "The pieces behind the API and how they fit."
 ```mermaid
 flowchart LR
   Client[Your app] --> API[MetaDexa API]
-  API --> ZeroX[0x]
-  API --> Odos[Odos]
+  API --> SAS[Swap Aggregation Service]
   API --> Chain[(Chain RPC)]
   API --> Store[(Referral data)]
 ```
@@ -20,7 +19,7 @@ Your app talks to one API. The API fans out to providers, reads the chain, and k
 
 | Part | What it does |
 | --- | --- |
-| Quote engine | Asks 0x and Odos for a route, picks the best, builds the transaction. |
+| Quote engine | Asks the Swap Aggregation Service for routes, picks the best, builds the transaction. |
 | Gasless engine | Same quotes, but a relayer submits and pays gas. The fee is taken in the token you pay with. |
 | Referral logic | Registers referrers, records swaps, awards points once a swap is confirmed on-chain. |
 | MetaSwap router | MetaDexa's own contract. Swaps go through it where it's deployed. |
@@ -32,14 +31,11 @@ Your app talks to one API. The API fans out to providers, reads the chain, and k
 - It does not send swaps for you, except gasless swaps through the relayer.
 - Quotes are not reserved. Prices can move before you send.
 
-## Providers
+## Swap Aggregation Service
 
-| Provider | Used for |
-| --- | --- |
-| 0x | Quotes, and USD prices for referral volume. Always queried. |
-| Odos | Quotes. Skipped on chain `10`. |
+The Swap Aggregation Service supplies routes and prices. It also supplies the USD prices used for referral volume.
 
-If one provider is down, the other still answers. If both are down you get a `500`. See [Errors](/errors).
+If some sources are down, the others still answer. If none answer you get a `500`. See [Errors](/errors).
 
 ## Where to go next
 

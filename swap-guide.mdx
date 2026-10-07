@@ -5,11 +5,11 @@ description: "How quotes work, slippage, approvals and the best route."
 
 ## How a quote is built
 
-`getQuote` asks 0x and Odos for a route at the same time. It keeps the one that returns the most buy tokens. On a tie, the lower gas estimate wins. If one provider fails, you still get the other one's quote.
+`getQuote` asks the Swap Aggregation Service for routes. It keeps the one that returns the most buy tokens. On a tie, the lower gas estimate wins. If one source fails, you still get a quote from the others.
 
 Two exceptions:
-- On chain `10` (Optimism) only 0x is queried.
-- If both providers fail, you get a `500`. See [Errors](/errors).
+- On chain `10` (Optimism) fewer sources are available.
+- If no source returns a route, you get a `500`. See [Errors](/errors).
 
 ## Parameters
 

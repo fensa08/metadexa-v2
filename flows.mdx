@@ -9,10 +9,10 @@ description: "What happens, step by step, for quotes, gasless swaps and referral
 sequenceDiagram
   participant App as Your app
   participant API as MetaDexa API
-  participant P as 0x and Odos
+  participant P as Swap Aggregation Service
   App->>API: GET getQuote
   API->>API: Validate parameters
-  API->>P: Ask both in parallel
+  API->>P: Request routes
   P-->>API: Quotes
   API->>API: Pick most buy tokens
   API->>API: Build tx, estimate gas
@@ -20,7 +20,7 @@ sequenceDiagram
 ```
 
 1. The API checks your parameters. A bad one returns a `400`.
-2. 0x and Odos are asked at the same time. Odos is skipped on chain `10`.
+2. The Swap Aggregation Service is asked for routes from its sources. On chain `10` only some sources are available.
 3. The quote with more buy tokens wins. A tie goes to the lower gas estimate.
 4. Unless `skipValidation=true`, the API builds the transaction and estimates gas. If the chain has a MetaSwap router, the call goes through it. Otherwise you get the provider's own transaction.
 5. You get the quote, or a `500` if nothing worked.
@@ -29,7 +29,7 @@ sequenceDiagram
 
 Same path, with differences:
 
-1. Only 0x is used.
+1. Only a single route source is used.
 2. A fee is charged in the token you pay with. On chains with a free-swaps campaign the fee is zero.
 3. The API prices that fee with a second quote.
 4. Unless `skipValidation=true`, it builds the call data, signs it with the relayer, and simulates it.
