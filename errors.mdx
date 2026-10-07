@@ -27,7 +27,7 @@ Check the HTTP status first. Don't parse the body unless you need the text.
 | --- | --- | --- |
 | `400` | A parameter is missing or invalid. The text names it. | Fix the request. Don't retry as is. |
 | `404` | Unknown path, or wrong method. | Check the URL and HTTP method. |
-| `500` `Aggregate Request failed` | No provider returned a quote. | Retry after a moment. Try a different amount or pair. |
+| `500` `Aggregate Request failed` | No route was found. | Retry after a moment. Try a different amount or pair. |
 | `500` `Transaction simulation failed` | The swap would revert, or gas estimation failed. | Check balance, approval and slippage. Then retry. |
 | `500` (other) | Server error. | Retry with backoff. |
 

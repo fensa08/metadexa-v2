@@ -22,7 +22,7 @@ sequenceDiagram
 1. The API checks your parameters. A bad one returns a `400`.
 2. The Swap Aggregation Service is asked for routes from its sources. On chain `10` only some sources are available.
 3. The quote with more buy tokens wins. A tie goes to the lower gas estimate.
-4. Unless `skipValidation=true`, the API builds the transaction and estimates gas. If the chain has a MetaSwap router, the call goes through it. Otherwise you get the provider's own transaction.
+4. Unless `skipValidation=true`, the API builds the transaction and estimates gas. If the chain has a MetaSwap router, the call goes through it. Otherwise you get the route's own transaction.
 5. You get the quote, or a `500` if nothing worked.
 
 ## Gasless quote
