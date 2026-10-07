@@ -81,23 +81,6 @@ On success the swap becomes `CONFIRMED` and the referrer is credited. Any mismat
 
 There is no failed state. A swap that never confirms stays `PENDING`. The hourly job only retries swaps younger than 48 hours.
 
-## How points are calculated
-
-1. The swap's USD value is looked up through the Swap Aggregation Service. It retries up to 3 times.
-2. The value sets a tier:
-
-| USD value | Tier |
-| --- | --- |
-| under 150 | 0 |
-| 150 to 249 | 1 |
-| 250 to 499 | 2 |
-| 500 to 999 | 3 |
-| 1000 and up | 4 |
-
-3. Points are the tier's reward multiplied by a fixed factor. The reward per tier and the factor are set by MetaDexa configuration, not by the API caller.
-
-Points are fixed when you record the swap and credited when it confirms.
-
 ## Referrer stats
 
 ```bash
