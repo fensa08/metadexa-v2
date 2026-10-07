@@ -21,7 +21,15 @@
         "group": "Guides",
         "pages": [
           "swap-guide",
+          "referrals",
           "errors"
+        ]
+      },
+      {
+        "group": "How it works",
+        "pages": [
+          "architecture",
+          "flows"
         ]
       }
     ]
