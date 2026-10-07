@@ -1,0 +1,44 @@
+---
+title: "Errors"
+description: "What the API returns when something goes wrong, and what to do."
+---
+
+## Format
+
+Errors come in two shapes, depending on the route.
+
+**Quote route (`getQuote`).** The body is plain text, not JSON.
+
+```text
+Validation failed: "slippage" is required
+```
+
+**Other routes.** A JSON body with `message` or `error`.
+
+```json
+{ "message": "Not found" }
+```
+
+Check the HTTP status first. Don't parse the body unless you need the text.
+
+## Codes
+
+| Status | Meaning | What to do |
+| --- | --- | --- |
+| `400` | A parameter is missing or invalid. The text names it. | Fix the request. Don't retry as is. |
+| `404` | Unknown path, or wrong method. | Check the URL and HTTP method. |
+| `500` `Aggregate Request failed` | No provider returned a quote. | Retry after a moment. Try a different amount or pair. |
+| `500` `Transaction simulation failed` | The swap would revert, or gas estimation failed. | Check balance, approval and slippage. Then retry. |
+| `500` (other) | Server error. | Retry with backoff. |
+
+## Common 400s
+
+- `"slippage" must be less than or equal to 1`. Slippage is a fraction, so `1` is 100%. Use `0.01` for 1%.
+- `"value" must contain at least one of [sellTokenAmount, buyTokenAmount]`. Send one amount.
+- `"fromAddress" is required`.
+
+## Retrying
+
+- `400` and `404`: never retry unchanged.
+- `500`: retry up to 3 times, waiting 1s, 2s, then 4s.
+- Always request a fresh quote on retry.
