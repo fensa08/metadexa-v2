@@ -1,0 +1,60 @@
+---
+title: "Swap guide"
+description: "How quotes work, slippage, approvals and the best route."
+---
+
+## How a quote is built
+
+`getQuote` asks the Swap Aggregation Service for routes. It keeps the one that returns the most buy tokens. On a tie, the lower gas estimate wins. If one source fails, you still get a quote from the others.
+
+Two exceptions:
+- On chain `10` (Optimism) fewer sources are available.
+- If no source returns a route, you get a `500`. See [Errors](/errors).
+
+## Parameters
+
+| Name | Required | Notes |
+| --- | --- | --- |
+| `sellTokenAddress` | yes | Token to sell |
+| `buyTokenAddress` | yes | Token to buy |
+| `sellTokenAmount` | one of two | Smallest unit, as a string |
+| `buyTokenAmount` | one of two | Smallest unit, as a string |
+| `slippage` | yes | Fraction from `0` to `1`. `0.01` is 1% |
+| `fromAddress` | yes | The wallet that will send the swap |
+| `recipient` | no | Who receives the buy tokens |
+| `skipValidation` | no | `true` returns a price only, with no `tx` |
+
+<Warning>
+On chain `10`, a request with only `buyTokenAmount` fails. Send `sellTokenAmount`.
+</Warning>
+
+## Slippage
+
+Slippage is the worst price you accept. `0.01` means the swap reverts if you would get more than 1% less than quoted. Lower is safer but reverts more often on volatile pairs.
+
+## Native token
+
+Use `0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee` for the chain's native token (ETH on Optimism). It needs no approval.
+
+## Token approvals
+
+For any other sell token, approve `allowanceTarget` from the quote. That's the MetaSwap router on chains where we have one. For the native token it comes back as the zero address, and you can ignore it.
+
+```ts
+await wallet.writeContract({
+  address: quote.sellTokenAddress,
+  abi: erc20Abi,
+  functionName: "approve",
+  args: [quote.allowanceTarget, BigInt(quote.sellAmount)],
+});
+```
+
+Approve the exact amount unless you have a reason not to.
+
+## Price only
+
+Add `skipValidation=true` to get a price without calldata. It skips gas estimation, so it's faster. Don't send a swap from it.
+
+## Quote expiry
+
+Quotes are not reserved. Prices move, so request a new quote right before signing.

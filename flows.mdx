@@ -1,0 +1,66 @@
+---
+title: "Execution flows"
+description: "What happens, step by step, for quotes, gasless swaps and referrals."
+---
+
+## Quote
+
+```mermaid
+sequenceDiagram
+  participant App as Your app
+  participant API as MetaDexa API
+  participant P as Swap Aggregation Service
+  App->>API: GET getQuote
+  API->>API: Validate parameters
+  API->>P: Request routes
+  P-->>API: Quotes
+  API->>API: Pick most buy tokens
+  API->>API: Build tx, estimate gas
+  API-->>App: Quote and tx
+```
+
+1. The API checks your parameters. A bad one returns a `400`.
+2. The Swap Aggregation Service is asked for routes from its sources. On chain `10` only some sources are available.
+3. The quote with more buy tokens wins. A tie goes to the lower gas estimate.
+4. Unless `skipValidation=true`, the API builds the transaction and estimates gas. If the chain has a MetaSwap router, the call goes through it. Otherwise you get the route's own transaction.
+5. You get the quote, or a `500` if nothing worked.
+
+## Gasless quote
+
+Same path, with differences:
+
+1. Only a single route source is used.
+2. A fee is charged in the token you pay with. On chains with a free-swaps campaign the fee is zero.
+3. The API prices that fee with a second quote.
+4. Unless `skipValidation=true`, it builds the call data, signs it with the relayer, and simulates it.
+
+Errors:
+- `400`: amount too small to cover the fee, a fee token that isn't accepted, or calldata that couldn't be built.
+- `500`: gas price lookup or signing failed.
+
+<Note>
+`getGaslessQuote` is served by the legacy service, and v2 answers `404` for it. In production the gateway sends that path to legacy, so callers still get gasless quotes.
+</Note>
+
+## Referral swap
+
+```mermaid
+sequenceDiagram
+  participant App as Your app
+  participant API as MetaDexa API
+  participant C as Chain
+  App->>API: registerReferrer
+  API-->>App: referral code
+  App->>C: Send swap
+  App->>API: addTransaction
+  API-->>App: Saved as PENDING
+  App->>API: verifyTransaction
+  API->>C: Read receipt
+  API-->>App: CONFIRMED, points awarded
+```
+
+If you never call `verifyTransaction`, the hourly job picks the swap up for up to 48 hours. Details are in [Referrals](/referrals).
+
+## Sources
+
+These flows come from the backend's own docs: `docs/ai/ARCHITECTURE.md` (flows A to C) and `METADEXA_ARCHITECTURE.MD` in the API repository.

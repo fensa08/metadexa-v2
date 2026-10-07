@@ -1,0 +1,96 @@
+---
+title: "Referrals"
+description: "Referral codes, swap tracking and reward points."
+---
+
+Referrers earn reward points when people they refer swap. Points are not money.
+
+<Warning>
+Referral tracking works on Optimism (chain `10`) only. Other chains return `400`.
+</Warning>
+
+## How it works
+
+1. A wallet registers and gets a 6-character code, such as `A1B2C3`.
+2. Someone swaps using that code. Your app records the swap.
+3. The API confirms the swap on-chain and credits the referrer.
+
+## Register a referrer
+
+```bash
+curl -X POST "https://YOUR_API_HOST/v1/registerReferrer" \
+  -H "Content-Type: application/json" \
+  -d '{ "from": "0x4444444444444444444444444444444444444444" }'
+```
+
+Returns `201`:
+
+```json
+{
+  "message": "Referrer registered successfully",
+  "referrer": "0x4444444444444444444444444444444444444444",
+  "referralCode": "A1B2C3"
+}
+```
+
+A wallet can register once. A second try returns `400`. To check, use `checkReferrer` with `{ "address": "0x..." }`, which returns `{ "isReferrer": true }`.
+
+## Record a swap
+
+After the user sends the swap, tell the API.
+
+```bash
+curl -X POST "https://YOUR_API_HOST/v1/addTransaction" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "0x5555555555555555555555555555555555555555",
+    "referralCode": "A1B2C3",
+    "transactionHash": "0xabc...",
+    "chainId": "10",
+    "amount": { "hex": "0x0de0b6b3a7640000" },
+    "tokenFrom": "0x1111111111111111111111111111111111111111",
+    "adapterData": "0x"
+  }'
+```
+
+- `chainId` is the string `"10"`. A number is rejected.
+- The swap is saved as `PENDING`.
+- An unknown code or a repeated hash returns an error.
+
+## Confirm a swap
+
+```bash
+curl -X POST "https://YOUR_API_HOST/v1/verifyTransaction" \
+  -H "Content-Type: application/json" \
+  -d '{ "chainId": "10", "transactionHash": "0xabc...", "from": "0x5555555555555555555555555555555555555555" }'
+```
+
+The API reads the receipt and checks that:
+- the swap succeeded
+- it went to the MetaSwap router
+- the sender, token and amount match what you recorded
+
+On success the swap becomes `CONFIRMED` and the referrer is credited. Any mismatch is an error, and the swap stays `PENDING`.
+
+## Status
+
+| Status | Meaning |
+| --- | --- |
+| `PENDING` | Recorded, not yet confirmed on-chain. |
+| `CONFIRMED` | Verified. Points are credited. |
+
+There is no failed state. A swap that never confirms stays `PENDING`. The hourly job only retries swaps younger than 48 hours.
+
+## Referrer stats
+
+```bash
+curl -X POST "https://YOUR_API_HOST/v1/referrer" \
+  -H "Content-Type: application/json" \
+  -d '{ "from": "0x4444444444444444444444444444444444444444", "page": 1, "rows": 5 }'
+```
+
+Returns your code, total volume in USD, number of referred users, earned points, and a page of referred swaps. `rows` can be 1 to 100.
+
+<Note>
+The wallet address in `from` is not signed. Treat these stats as readable by anyone who knows the address.
+</Note>
