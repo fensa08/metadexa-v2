@@ -5,13 +5,13 @@ description: "Get a quote, send the swap, check the result."
 
 Four steps. You need a wallet address, two token addresses and an RPC for your chain.
 
-Replace `YOUR_API_HOST` with the API base URL. The `v1` segment is a label and can be any single path segment.
+The base URL is `https://api.metadexa.io`. Paths start with `/v1.0`.
 
 ## 1. Get a quote
 
 <CodeGroup>
 ```bash curl
-curl "https://YOUR_API_HOST/v1/10/getQuote?\
+curl "https://api.metadexa.io/v1.0/10/getQuote?\
 sellTokenAddress=0x1111111111111111111111111111111111111111&\
 buyTokenAddress=0x2222222222222222222222222222222222222222&\
 sellTokenAmount=1000000000000000000&\
@@ -28,7 +28,7 @@ const params = new URLSearchParams({
   fromAddress: "0x4444444444444444444444444444444444444444",
 });
 
-const response = await fetch(`https://YOUR_API_HOST/v1/10/getQuote?${params}`);
+const response = await fetch(`https://api.metadexa.io/v1.0/10/getQuote?${params}`);
 if (!response.ok) throw new Error(await response.text());
 const quote = await response.json();
 ```

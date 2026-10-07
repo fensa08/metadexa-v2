@@ -1,0 +1,34 @@
+---
+title: "Rate limits and best practices"
+description: "Be kind to the API and handle failures well."
+---
+
+## Limits
+
+The API sets no per-user rate limit. Still, keep your traffic reasonable. Heavy bursts can slow quotes for everyone.
+
+Requests that run longer than 25 seconds end with `504`.
+
+## Cache quotes, briefly
+
+- Reuse a quote for a few seconds while the user types. Refetch when an input changes.
+- Never reuse a quote to send a swap after the user waited. Fetch a new one right before signing.
+- Gasless quotes expire after 10 minutes.
+
+## Use price-only calls for display
+
+Add `skipValidation=true` to show a price. It skips gas estimation. Use the full call only when the user is ready to swap.
+
+## Handle downtime
+
+A quote can fail when upstream sources are down. In that case:
+
+1. Retry up to 3 times, waiting 1s, 2s, then 4s.
+2. Then show a clear message and let the user try again.
+3. Don't retry `400` errors. Fix the request.
+
+## Keep it safe
+
+- Set a sensible slippage. Start at `0.005` to `0.01`.
+- Don't edit `tx` from a quote.
+- Check the receipt before telling the user the swap worked.

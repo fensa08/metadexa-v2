@@ -1,0 +1,32 @@
+---
+title: "Authentication and access"
+description: "Base URL, keys, environments and CORS."
+---
+
+## Base URL
+
+```text
+https://api.metadexa.io
+```
+
+All paths start with `/v1.0`, for example `/v1.0/10/getQuote`.
+
+## API keys
+
+None. The API is open. You don't send a key or a token.
+
+## Environments
+
+One production URL. There's no public sandbox.
+
+## CORS
+
+Browsers can call the API only from `https://app.kromatika.finance`. Other origins get no CORS header, so the browser blocks the response.
+
+Servers and scripts aren't affected. Call the API from your backend if you build a website on another domain.
+
+Allowed methods are `GET`, `POST` and `OPTIONS`.
+
+<Note>
+Referral routes ask for a wallet address in `from`. It isn't signed, so don't treat it as proof of ownership.
+</Note>

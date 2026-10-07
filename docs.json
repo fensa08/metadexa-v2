@@ -14,15 +14,19 @@
         "group": "Get started",
         "pages": [
           "index",
-          "quickstart"
+          "quickstart",
+          "authentication",
+          "chains"
         ]
       },
       {
         "group": "Guides",
         "pages": [
           "swap-guide",
+          "gasless-guide",
           "referrals",
-          "errors"
+          "errors",
+          "rate-limits"
         ]
       },
       {
@@ -30,6 +34,26 @@
         "pages": [
           "architecture",
           "flows"
+        ]
+      },
+      {
+        "group": "API reference",
+        "openapi": "openapi.yaml",
+        "pages": [
+          "GET /v1.0/{chainId}/getQuote",
+          "GET /v1.0/{chainId}/getGaslessQuote",
+          "POST /v1.0/registerReferrer",
+          "POST /v1.0/checkReferrer",
+          "POST /v1.0/addTransaction",
+          "POST /v1.0/verifyTransaction",
+          "POST /v1.0/referrer"
+        ]
+      },
+      {
+        "group": "More",
+        "pages": [
+          "changelog",
+          "faq"
         ]
       }
     ]

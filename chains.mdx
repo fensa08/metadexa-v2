@@ -1,0 +1,29 @@
+---
+title: "Supported chains and tokens"
+description: "Chain IDs, router addresses and the native token."
+---
+
+## Chains
+
+| Chain | ID | MetaSwap router |
+| --- | --- | --- |
+| Ethereum | `1` | `0x8F42F726e9222DbBd8958D006aa88F1d2D8e6D91` |
+| Optimism | `10` | `0x6FE9F5616Ac30E0A66B5Bc68D05F081471835bf7` |
+| Polygon | `137` | `0x6afD834f6e3D5ad5A83E7838ca45F3DBDe3E323d` |
+| Arbitrum One | `42161` | `0x4ab78b894611f185Cd7378E25C8f80d63cfBAa71` |
+| Base | `8453` | `0x8F42F726e9222DbBd8958D006aa88F1d2D8e6D91` |
+
+Swaps go through the router. It's also the `allowanceTarget` you approve.
+
+<Warning>
+Check these addresses against the contract deployments before you hardcode them. Prefer reading `allowanceTarget` from each quote.
+</Warning>
+
+## Native token
+
+Use `0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee` for the chain's native token. It needs no approval, and `allowanceTarget` comes back as the zero address.
+
+## Chain quirks
+
+- **Optimism (`10`):** send `sellTokenAmount`. A `buyTokenAmount`-only request fails.
+- **Referrals:** Optimism only.

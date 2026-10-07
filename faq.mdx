@@ -1,0 +1,35 @@
+---
+title: "FAQ and troubleshooting"
+description: "Failed swaps, stuck referrals and price differences."
+---
+
+<AccordionGroup>
+  <Accordion title="My swap reverted. Why?">
+    Usual causes:
+    - Slippage is too low and the price moved. Raise it a little.
+    - The quote is old. Fetch a new one and send it right away.
+    - The sell token isn't approved for `allowanceTarget`, or the balance is too low.
+
+    If the quote itself says `Transaction simulation failed`, the swap would revert as built. Fix the cause and ask again.
+  </Accordion>
+  <Accordion title="I get `Aggregate Request failed`.">
+    No route was found. Try a different amount or pair, or retry in a moment. On Optimism, send `sellTokenAmount`.
+  </Accordion>
+  <Accordion title="A referred swap is stuck on PENDING.">
+    It stays `PENDING` until it's confirmed on-chain. Call `verifyTransaction` with the swap's hash. An hourly check also retries swaps under 48 hours old. After that, call `verifyTransaction` yourself.
+
+    It stays `PENDING` if the swap failed, or if the sender, token or amount doesn't match what you recorded.
+  </Accordion>
+  <Accordion title="`addTransaction` rejects my chain ID.">
+    Send it as a string, `"10"`. Only Optimism is supported for referrals.
+  </Accordion>
+  <Accordion title="The price changed between quote and swap.">
+    Prices move. Slippage sets how much worse a price you accept. The wider the pair's spread or the bigger your size, the more price impact you'll see. Try a smaller amount.
+  </Accordion>
+  <Accordion title="My browser blocks the request.">
+    CORS only allows `https://app.kromatika.finance`. Call the API from your backend instead.
+  </Accordion>
+  <Accordion title="Do I need an API key?">
+    No.
+  </Accordion>
+</AccordionGroup>

@@ -18,7 +18,7 @@ Referral tracking works on Optimism (chain `10`) only. Other chains return `400`
 ## Register a referrer
 
 ```bash
-curl -X POST "https://YOUR_API_HOST/v1/registerReferrer" \
+curl -X POST "https://api.metadexa.io/v1.0/registerReferrer" \
   -H "Content-Type: application/json" \
   -d '{ "from": "0x4444444444444444444444444444444444444444" }'
 ```
@@ -40,7 +40,7 @@ A wallet can register once. A second try returns `400`. To check, use `checkRefe
 After the user sends the swap, tell the API.
 
 ```bash
-curl -X POST "https://YOUR_API_HOST/v1/addTransaction" \
+curl -X POST "https://api.metadexa.io/v1.0/addTransaction" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "0x5555555555555555555555555555555555555555",
@@ -60,7 +60,7 @@ curl -X POST "https://YOUR_API_HOST/v1/addTransaction" \
 ## Confirm a swap
 
 ```bash
-curl -X POST "https://YOUR_API_HOST/v1/verifyTransaction" \
+curl -X POST "https://api.metadexa.io/v1.0/verifyTransaction" \
   -H "Content-Type: application/json" \
   -d '{ "chainId": "10", "transactionHash": "0xabc...", "from": "0x5555555555555555555555555555555555555555" }'
 ```
@@ -84,7 +84,7 @@ There is no failed state. A swap that never confirms stays `PENDING`. The hourly
 ## Referrer stats
 
 ```bash
-curl -X POST "https://YOUR_API_HOST/v1/referrer" \
+curl -X POST "https://api.metadexa.io/v1.0/referrer" \
   -H "Content-Type: application/json" \
   -d '{ "from": "0x4444444444444444444444444444444444444444", "page": 1, "rows": 5 }'
 ```
